@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <title>📍 Smart Location Detector | Full GPS Info</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(135deg, #0b2b3b 0%, #1a4a5f 100%);
+      font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+      min-height: 100vh;
+      padding: 20px 16px 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* main card */
+    .card {
+      max-width: 800px;
+      width: 100%;
+      background: rgba(255,255,255,0.98);
+      border-radius: 44px;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.2);
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    /* header */
+    .hero {
+      background: #0f2c39;
+      padding: 28px 24px;
+      text-align: center;
+      color: white;
+    }
+
+    .hero h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      letter-spacing: -0.3px;
+    }
+
+    .hero p {
+      opacity: 0.85;
+      margin-top: 10px;
+      font-size: 0.9rem;
+    }
+
+    /* permission guide banner (visible on mobile only when needed) */
+    .permission-guide {
+      background: #fef9e3;
+      border-left: 5px solid #f5a623;
+      margin: 16px 20px 0 20px;
+      padding: 14px 16px;
+      border-radius: 24px;
+      font-size: 0.85rem;
+      display: none;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .permission-guide.show-guide {
+      display: block;
+    }
+
+    .guide-title {
+      font-weight: 800;
+      color: #b45f06;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .guide-steps {
+      padding-left: 24px;
+      margin: 6px 0;
+      color: #5a3e1b;
+    }
+
+    .guide-steps li {
+      margin: 6px 0;
+    }
+
+    /* button area */
+    .btn-wrapper {
+      padding: 28px 24px 12px 24px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .locate-btn {
+      background: #1f7b4d;
+      border: none;
+      width: 100%;
+      max-width: 320px;
+      padding: 1rem 1.8rem;
+      border-radius: 80px;
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 12px 20px -8px rgba(0,0,0,0.3);
+      background: linear-gradient(105deg, #1f7b4d, #28a16b);
+      border: none;
+    }
+
+    .locate-btn:active {
+      transform: scale(0.97);
+      background: #16683f;
+    }
+
+    /* status */
+    .status-area {
+      text-align: center;
+      margin: 8px 20px;
+      min-height: 60px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 8px 18px;
+      border-radius: 60px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      background: #eef2f5;
+    }
+
+    .error-badge {
+      background: #ffe0db;
+      color: #bc3900;
+    }
+
+    .loading-badge {
+      background: #e2f0fa;
+      color: #0f5b7a;
+    }
+
+    .success-badge {
+      background: #dff0e4;
+      color: #116530;
+    }
+
+    /* info grid */
+    .info-panel {
+      padding: 8px 20px 28px 20px;
+    }
+
+    .grid-container {
+      background: #fafcff;
+      border-radius: 32px;
+      padding: 6px 0;
+      border: 1px solid #e9edf2;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+    }
+
+    .grid-item {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 14px 18px;
+      border-bottom: 1px solid #eef2f8;
+      gap: 12px;
+    }
+
+    .grid-item:last-child {
+      border-bottom: none;
+    }
+
+    .label {
+      font-weight: 700;
+      width: 130px;
+      color: #1f4e6e;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .value {
+      flex: 1;
+      word-break: break-word;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      font-size: 0.9rem;
+      color: #1e2f3c;
+      line-height: 1.4;
+    }
+
+    .address-box {
+      background: #f0f6fe;
+      border-radius: 20px;
+      padding: 12px;
+      margin-top: 4px;
+      font-family: system-ui;
+    }
+
+    /* hints */
+    .footer-note {
+      font-size: 0.7rem;
+      text-align: center;
+      padding: 10px 20px 22px;
+      color: #3d6b7e;
+    }
+
+    @media (max-width: 550px) {
+      .hero h1 { font-size: 1.5rem; }
+      .label { width: 110px; font-size: 0.8rem; }
+      .value { font-size: 0.8rem; }
+      .locate-btn { font-size: 1.2rem; padding: 0.8rem 1.2rem; }
+      .grid-item { padding: 12px 14px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <div class="hero">
+    <h1>
+      <span>📍</span> Full Location Hub
+    </h1>
+    <p>Coordinates • Accuracy • Altitude • Speed • Address</p>
+  </div>
+
+  <!-- dynamic permission guide box - will appear when permission denied -->
+  <div id="permissionGuideBox" class="permission-guide">
+    <div class="guide-title">
+      🔐 <strong>Allow location access (2 steps)</strong>
+    </div>
+    <ul class="guide-steps" id="guideStepsList">
+      <!-- dynamic steps per device injected by js -->
+    </ul>
+  </div>
+
+  <div class="btn-wrapper">
+    <button class="locate-btn" id="locateBtn">
+      🌍 GET MY LOCATION
+    </button>
+  </div>
+
+  <div class="status-area" id="statusArea">
+    <span class="status-badge">⚡ Tap button → grant permission</span>
+  </div>
+
+  <div class="info-panel">
+    <div class="grid-container" id="infoGrid">
+      <div class="grid-item">
+        <div class="label">📍 Ready</div>
+        <div class="value">Click the green button & allow location.<br>Works on Android, iOS, Linux, all devices.</div>
+      </div>
+    </div>
+  </div>
+  <div class="footer-note">
+    🌐 Uses high-accuracy GPS + network | Reverse address via OpenStreetMap
+  </div>
+</div>
+
+<script>
+  (function() {
+    // DOM elements
+    const locateBtn = document.getElementById('locateBtn');
+    const statusArea = document.getElementById('statusArea');
+    const infoGrid = document.getElementById('infoGrid');
+    const guideBox = document.getElementById('permissionGuideBox');
+    const guideStepsList = document.getElementById('guideStepsList');
+
+    // helper to set status message
+    function setStatusMessage(text, type = 'info') {
+      statusArea.innerHTML = '';
+      const span = document.createElement('span');
+      span.textContent = text;
+      span.className = 'status-badge';
+      if (type === 'error') span.classList.add('error-badge');
+      else if (type === 'loading') span.classList.add('loading-badge');
+      else if (type === 'success') span.classList.add('success-badge');
+      statusArea.appendChild(span);
+    }
+
+    // Clear and show loading state
+    function showLoadingState() {
+      setStatusMessage('🔍 Requesting location & permissions...', 'loading');
+      // show info grid loading skeleton
+      infoGrid.innerHTML = `
+        <div class="grid-item">
+          <div class="label">⏳ Status</div>
+          <div class="value">Acquiring GPS fix. Please allow location if prompted.</div>
+        </div>
+        <div class="grid-item">
+          <div class="label">📱 Permission</div>
+          <div class="value">Waiting for your approval (browser will ask).</div>
+        </div>
+      `;
+      // hide guide initially
+      guideBox.classList.remove('show-guide');
+    }
+
+    // Display detailed geo info + reverse geocode
+    async function displayLocationData(position) {
+      const coords = position.coords;
+      const timestamp = position.timestamp;
+
+      // Prepare values
+      const lat = coords.latitude;
+      const lng = coords.longitude;
+      const accuracy = coords.accuracy; // meters
+      const altitude = coords.altitude !== undefined && coords.altitude !== null ? coords.altitude : null;
+      const altAccuracy = coords.altitudeAccuracy !== undefined && coords.altitudeAccuracy !== null ? coords.altitudeAccuracy : null;
+      let heading = coords.heading !== undefined && coords.heading !== null ? coords.heading : null;
+      let speed = coords.speed !== undefined && coords.speed !== null ? coords.speed : null;
+
+      // Format heading cardinal
+      let headingDisplay = 'Not available';
+      if (heading !== null && heading >= 0) {
+        headingDisplay = `${heading.toFixed(1)}° ${getCardinal(heading)}`;
+      } else {
+        headingDisplay = '🚫 Not supported (device may lack compass)';
+      }
+
+      // Speed formatting
+      let speedDisplay = 'Not available';
+      if (speed !== null && speed >= 0) {
+        let kmh = (speed * 3.6).toFixed(1);
+        speedDisplay = `${speed.toFixed(2)} m/s (${kmh} km/h)`;
+      } else {
+        speedDisplay = '🚫 Stationary or no sensor';
+      }
+
+      // format date
+      const dateObj = new Date(timestamp);
+      const timestampStr = `${dateObj.toLocaleString()} (${dateObj.toISOString().slice(0,19)} UTC)`;
+
+      // DMS strings
+      function toDMS(coord, isLat) {
+        if (coord === undefined || coord === null) return '';
+        let absolute = Math.abs(coord);
+        let deg = Math.floor(absolute);
+        let minutesFloat = (absolute - deg) * 60;
+        let minutes = Math.floor(minutesFloat);
+        let seconds = ((minutesFloat - minutes) * 60).toFixed(2);
+        let dir = '';
+        if (isLat) dir = coord >= 0 ? 'N' : 'S';
+        else dir = coord >= 0 ? 'E' : 'W';
+        return `${deg}° ${minutes}' ${seconds}" ${dir}`;
+      }
+
+      const latDMS = toDMS(lat, true);
+      const lngDMS = toDMS(lng, false);
+
+      // Build dynamic HTML (without address first)
+      let gridHTML = `
+        <div class="grid-item">
+          <div class="label">🌐 Latitude</div>
+          <div class="value"><strong>${lat.toFixed(7)}°</strong><br><span style="font-size:0.75rem; opacity:0.7;">${latDMS}</span></div>
+        </div>
+        <div class="grid-item">
+          <div class="label">🗺️ Longitude</div>
+          <div class="value"><strong>${lng.toFixed(7)}°</strong><br><span style="font-size:0.75rem; opacity:0.7;">${lngDMS}</span></div>
+        </div>
+        <div class="grid-item">
+          <div class="label">🎯 Accuracy (radius)</div>
+          <div class="value">${accuracy ? accuracy.toFixed(1) + ' meters' : '—'} ${accuracy ? '± uncertainty' : ''}</div>
+        </div>
+        <div class="grid-item">
+          <div class="label">⛰️ Altitude</div>
+          <div class="value">${altitude !== null ? altitude.toFixed(1) + ' meters (above sea level)' : '❌ Not provided by sensor'}</div>
+        </div>
+        ${altAccuracy !== null ? `<div class="grid-item"><div class="label">📏 Altitude accuracy</div><div class="value">± ${altAccuracy.toFixed(1)} meters</div></div>` : ''}
+        <div class="grid-item">
+          <div class="label">🧭 Heading</div>
+          <div class="value">${headingDisplay}</div>
+        </div>
+        <div class="grid-item">
+          <div class="label">💨 Speed</div>
+          <div class="value">${speedDisplay}</div>
+        </div>
+        <div class="grid-item">
+          <div class="label">⏱️ Timestamp</div>
+          <div class="value">${timestampStr}</div>
+        </div>
+        <div class="grid-item">
+          <div class="label">📡 Source</div>
+          <div class="value">${accuracy < 30 ? 'High accuracy (GPS + assisted)' : (accuracy < 150 ? 'Medium (WiFi/Cell)' : 'Coarse location')}</div>
+        </div>
+        <div class="grid-item" id="addressGridItem">
+          <div class="label">🏠 Address</div>
+          <div class="value" id="addressValue">⏳ Fetching nearby address...</div>
+        </div>
+      `;
+      
+      infoGrid.innerHTML = gridHTML;
+      
+      // reverse geocode (address) using OpenStreetMap Nominatim (free, no key)
+      const addressValueSpan = document.getElementById('addressValue');
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 7000);
+        const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1&accept-language=en`, {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'LocationDetectorApp/1.0 (mobile-friendly)'
+          },
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.display_name) {
+            let shortAddr = data.display_name.split(',').slice(0, 5).join(',');
+            let fullAddr = data.display_name;
+            addressValueSpan.innerHTML = `<div class="address-box">📍 ${shortAddr}<br><span style="font-size:0.75rem; opacity:0.7;">${fullAddr}</span></div>`;
+          } else {
+            addressValueSpan.innerHTML = '⚠️ Address not resolved, but coordinates are accurate.';
+          }
+        } else {
+          addressValueSpan.innerHTML = '🌍 Reverse geocoding unavailable (network). Raw coords ready.';
+        }
+      } catch (err) {
+        console.warn("reverse geocode error", err);
+        addressValueSpan.innerHTML = '📍 Address fetch skipped, but GPS data is complete.';
+      }
+    }
+
+    function getCardinal(deg) {
+      if (deg >= 337.5 || deg < 22.5) return 'N';
+      if (deg >= 22.5 && deg < 67.5) return 'NE';
+      if (deg >= 67.5 && deg < 112.5) return 'E';
+      if (deg >= 112.5 && deg < 157.5) return 'SE';
+      if (deg >= 157.5 && deg < 202.5) return 'S';
+      if (deg >= 202.5 && deg < 247.5) return 'SW';
+      if (deg >= 247.5 && deg < 292.5) return 'W';
+      return 'NW';
+    }
+
+    // device-specific permission guide (very visual)
+    function showPermissionGuideBasedOnUA() {
+      const ua = navigator.userAgent.toLowerCase();
+      let stepsHtml = '';
+      let isMobile = /android|iphone|ipad|ipod|mobile/i.test(ua);
+      
+      if (/android/i.test(ua)) {
+        stepsHtml = `
+          <li>🔹 Tap the <strong>🔒 "Location permission" prompt</strong> that appears → choose <strong>"Allow" or "While using the app"</strong>.</li>
+          <li>🔹 If you accidentally blocked: go to <strong>Settings → Apps → Your browser → Permissions → Location → Allow</strong>.</li>
+          <li>🔹 Then <strong>refresh this page</strong> and click the green button again.</li>
+        `;
+      } 
+      else if (/iphone|ipad|ipod/i.test(ua)) {
+        stepsHtml = `
+          <li>🍏 iOS Safari: When you see the popup, tap <strong>"Allow"</strong> (Once / While Using App).</li>
+          <li>🍏 If location was denied before: Go to <strong>Settings → Privacy → Location Services → Safari Websites → Change to "Allow"</strong>.</li>
+          <li>🍏 Then come back and <strong>reload the page</strong> → click button again.</li>
+        `;
+      }
+      else {
+        stepsHtml = `
+          <li>💻 Click <strong>"Allow"</strong> on the browser permission popup.</li>
+          <li>💻 If previously blocked: click the lock/info icon in address bar → reset location permissions.</li>
+        `;
+      }
+      
+      guideStepsList.innerHTML = stepsHtml;
+      guideBox.classList.add('show-guide');
+      // auto-scroll to guide a bit
+      setTimeout(() => {
+        guideBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 200);
+    }
+    
+    // hide guide after success
+    function hideGuide() {
+      guideBox.classList.remove('show-guide');
+    }
+    
+    // Error handler that gives clear instructions + shows guide
+    function handleGeoError(error) {
+      let userMessage = '';
+      let showManualGuide = true;
+      switch(error.code) {
+        case error.PERMISSION_DENIED:
+          userMessage = '❌ Permission denied. You blocked location access.';
+          break;
+        case error.POSITION_UNAVAILABLE:
+          userMessage = '📡 Position unavailable: weak GPS/WiFi signal. Turn on location services.';
+          showManualGuide = false; // no need permission guide, need signal
+          break;
+        case error.TIMEOUT:
+          userMessage = '⏰ Timeout. Try again in open area with better GPS.';
+          showManualGuide = false;
+          break;
+        default:
+          userMessage = `⚠️ Error: ${error.message}`;
+      }
+      setStatusMessage(userMessage, 'error');
+      
+      // Show more helpful content in info grid
+      infoGrid.innerHTML = `
+        <div class="grid-item">
+          <div class="label">⚠️ Location Failed</div>
+          <div class="value">${userMessage}<br><br><strong>🔄 Refresh & allow permission when prompted.</strong></div>
+        </div>
+        <div class="grid-item">
+          <div class="label">💡 Tip</div>
+          <div class="value">Ensure GPS/Location is ON in your device settings, then reload page.</div>
+        </div>
+      `;
+      
+      if (showManualGuide && (error.code === error.PERMISSION_DENIED)) {
+        showPermissionGuideBasedOnUA();
+      } else if (error.code === error.PERMISSION_DENIED) {
+        showPermissionGuideBasedOnUA();
+      } else {
+        // for other errors, we might still show a generic guide but not overwhelming
+        if (error.code !== error.POSITION_UNAVAILABLE && error.code !== error.TIMEOUT) {
+          guideBox.classList.remove('show-guide');
+        } else {
+          guideBox.classList.remove('show-guide');
+        }
+      }
+    }
+    
+    // Main location trigger with retry + accurate options
+    function getLocationWithFallback() {
+      showLoadingState();
+      hideGuide();
+      
+      if (!navigator.geolocation) {
+        setStatusMessage('❌ Geolocation not supported by this browser', 'error');
+        infoGrid.innerHTML = `<div class="grid-item"><div class="label">⚠️ Browser</div><div class="value">Your browser does not support Geolocation API. Update your browser.</div></div>`;
+        return;
+      }
+      
+      // Use high accuracy, but also set timeout to 15s (mobile friendly)
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      };
+      
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          // success!
+          setStatusMessage('✅ Location captured! Full details below.', 'success');
+          hideGuide(); // remove help banner
+          await displayLocationData(position);
+        },
+        (err) => {
+          handleGeoError(err);
+        },
+        options
+      );
+    }
+    
+    // Attach click event
+    locateBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      getLocationWithFallback();
+    });
+    
+    // optional: on page load, pre-check if permission can be triggered, but not auto-request.
+    // Instead, we provide initial friendly message + instruction to tap button.
+    // Also, on mobile we preload but do NOT auto-request location (avoid user annoyance).
+    // Provide a note that they need to tap button.
+    // Also pre-detect if it's mobile to show a small tip (but not intrusive)
+    function initialSetup() {
+      const isMobile = /android|iphone|ipad|ipod|mobile/i.test(navigator.userAgent);
+      if (isMobile) {
+        // show small helper tip inside info grid?
+        infoGrid.innerHTML = `
+          <div class="grid-item">
+            <div class="label">📱 Mobile ready</div>
+            <div class="value">Tap the <strong>🌍 GET MY LOCATION</strong> button → allow location prompt → enjoy full GPS data (altitude, accuracy, address).</div>
+          </div>
+          <div class="grid-item">
+            <div class="label">🔐 Permission tip</div>
+            <div class="value">If prompt doesn't appear, check device location settings (GPS/Location ON) and browser permissions.</div>
+          </div>
+        `;
+      } else {
+        infoGrid.innerHTML = `
+          <div class="grid-item">
+            <div class="label">💻 Desktop ready</div>
+            <div class="value">Click the button & allow location to see coordinates, altitude, speed, heading & reverse address.</div>
+          </div>
+        `;
+      }
+      setStatusMessage('⚡ Tap button → allow location (popup)', 'info');
+    }
+    
+    initialSetup();
+  })();
+</script>
+</body>
+</html>
